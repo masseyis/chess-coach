@@ -63,6 +63,7 @@ let lastScore: EngineScore | null = null;
 const jobQueue: EvaluateJob[] = [];
 
 const DEFAULT_DEPTH = 10;
+const forceFallback = import.meta.env.VITE_FORCE_STOCKFISH_LITE === "true";
 
 startEngine();
 
@@ -80,7 +81,7 @@ ctx.onmessage = (event: MessageEvent<IncomingMessage>) => {
 };
 
 function startEngine() {
-  if (typeof SharedArrayBuffer === "undefined") {
+  if (typeof SharedArrayBuffer === "undefined" || forceFallback) {
     startFallbackEngine();
     return;
   }
@@ -110,7 +111,10 @@ function startEngine() {
 
 function startFallbackEngine() {
   try {
-    const fallbackUrl = new URL(`${import.meta.env.BASE_URL ?? "/"}stockfish-lite/worker.js`, self.location.href).toString();
+    const origin = (self as unknown as { origin?: string }).origin ?? "";
+    const basePath = import.meta.env.BASE_URL ?? "/";
+    const normalizedBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
+    const fallbackUrl = `${origin}${normalizedBase}stockfish-lite/worker.js`;
     const nestedWorker = new Worker(fallbackUrl);
     nestedWorker.onmessage = (event: MessageEvent<string>) => {
       if (event.data) {
