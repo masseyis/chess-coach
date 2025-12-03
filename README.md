@@ -74,27 +74,15 @@ A minimal React + TypeScript chess coach that lets you play as White against a b
 - The Stockfish search depth dropdown (in `src/components/Controls.tsx`) is the simplest way to dial difficulty, but you can also modify the worker to tweak skill level, hash, or time controls.
 - Use the **Undo move** button in the header to replay a position right after receiving feedback.
 
-## Running on iOS with Capacitor
+## Installing on your phone/tablet
 
-This repo is preconfigured with [Capacitor](https://capacitorjs.com/) so you can ship the web UI as a native iOS app:
+The site is a Progressive Web App (PWA), so you can add it to your home screen:
 
-1. Ensure your `.env` (or `.env.production`) contains `VITE_OPENAI_API_KEY` before building. The key is still bundled client-side, so only deploy to devices you trust.
-2. Build the web assets and sync them into the Capacitor shell:
+1. Open your deployed URL (or `npm run dev` on localhost).
+2. On **iOS Safari** tap the share icon → **Add to Home Screen**.
+3. On **Android Chrome** tap the menu → **Add to Home Screen** / **Install app**.
 
-   ```bash
-   npm run build
-   npm run cap:sync
-   ```
-
-3. Open the Xcode workspace:
-
-   ```bash
-   npm run cap:open:ios
-   ```
-
-4. In Xcode, pick your team/signing certificate, select a simulator or plugged-in device, then press **Run** (⌘R).
-
-Whenever you change the React app, re-run `npm run build && npm run cap:sync` so the updated assets land in `ios/App/App/public`. You can also use Capacitor's live reload workflow (`npx cap run ios -l --external`) if you prefer to develop directly on device. The in-app API key manager automatically uses the iOS Keychain via Capacitor Preferences.
+The icon/bundle installs offline support via the built-in service worker, and your game/API key live only in local storage on that device.
 
 ## Deploying to GitHub Pages
 
