@@ -234,7 +234,8 @@ function postError(message: string, id?: string) {
 }
 
 function sendCommand(command: string) {
-  if (!SharedArrayBuffer || forceFallback) {
+  const hasSharedArrayBuffer = typeof SharedArrayBuffer !== "undefined";
+  if (!hasSharedArrayBuffer || forceFallback) {
     console.log("[fallback cmd]", command);
   }
   engineAdapter?.send(command);
