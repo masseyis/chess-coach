@@ -234,6 +234,9 @@ function postError(message: string, id?: string) {
 }
 
 function sendCommand(command: string) {
+  if (!SharedArrayBuffer || forceFallback) {
+    console.log("[fallback cmd]", command);
+  }
   engineAdapter?.send(command);
 }
 
