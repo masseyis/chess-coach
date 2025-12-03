@@ -44,8 +44,17 @@ type ErrorMessage = { type: "error"; id?: string; message: string };
 type Outgoing = EvaluationMessage | ReadyMessage | ErrorMessage;
 
 const ctx = self as DedicatedWorkerGlobalScope;
+ctx.onclose = () => {
+  engineAdapter?.dispose();
+};
 
 let engine: StockfishInstance | null = null;
+type EngineAdapter = {
+  send: (command: string) => void;
+  dispose: () => void;
+};
+
+let engineAdapter: EngineAdapter | null = null;
 let engineReady = false;
 let currentSkillLevel = 6;
 let activeJob: EvaluateJob | null = null;
@@ -72,7 +81,7 @@ ctx.onmessage = (event: MessageEvent<IncomingMessage>) => {
 
 function startEngine() {
   if (typeof SharedArrayBuffer === "undefined") {
-    postError("SharedArrayBuffer is not available. Enable cross-origin isolation.");
+    startFallbackEngine();
     return;
   }
 
@@ -87,12 +96,39 @@ function startEngine() {
   })
     .then((instance: StockfishInstance) => {
       engine = instance as StockfishInstance;
+      engineAdapter = {
+        send: (command: string) => engine?.postMessage(command),
+        dispose: () => engine?.terminate?.(),
+      };
       engine.addMessageListener(handleEngineMessage);
       sendCommand("uci");
     })
     .catch((error: unknown) => {
       postError(`Failed to start Stockfish: ${String(error)}`);
     });
+}
+
+function startFallbackEngine() {
+  try {
+    const base = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+    const fallbackUrl = new URL(`${base}/stockfish-lite/worker.js`, import.meta.url).href;
+    const nestedWorker = new Worker(fallbackUrl);
+    nestedWorker.onmessage = (event: MessageEvent<string>) => {
+      if (event.data) {
+        handleEngineMessage(String(event.data));
+      }
+    };
+    nestedWorker.onerror = (err) => {
+      postError(`Fallback engine error: ${err.message ?? err}`);
+    };
+    engineAdapter = {
+      send: (command: string) => nestedWorker.postMessage(command),
+      dispose: () => nestedWorker.terminate(),
+    };
+    sendCommand("uci");
+  } catch (error) {
+    postError(`Failed to load fallback engine: ${String(error)}`);
+  }
 }
 
 function handleEngineMessage(rawLine: string) {
@@ -193,7 +229,7 @@ function postError(message: string, id?: string) {
 }
 
 function sendCommand(command: string) {
-  engine?.postMessage(command);
+  engineAdapter?.send(command);
 }
 
 export {};
