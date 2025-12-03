@@ -24,6 +24,7 @@ import {
 } from "./lib/chessHelpers";
 import { buildRecentFeedbackMemory, summarizeCoachingHistory } from "./lib/coachingHistory";
 import { clearApiKey, loadApiKey, saveApiKey } from "./lib/apiKeyStorage";
+import { clearGameState, loadGameState, saveGameState } from "./lib/gameStorage";
 import "./App.css";
 
 const DEFAULT_DEPTH = 10;
@@ -93,6 +94,47 @@ export default function App() {
     };
   }, []);
 
+  const syncGameState = useCallback(() => {
+    const game = chessRef.current;
+    const currentFen = game.fen();
+    const verboseHistory = game.history({ verbose: true });
+    setFen(currentFen);
+    setMoves(verboseHistory);
+
+    let resultText: string | null = null;
+    if (game.isGameOver()) {
+      resultText = describeGameOutcome(game);
+      setGameResult(resultText);
+      setStatusText(resultText);
+    } else {
+      setGameResult(null);
+    }
+
+    saveGameState({ movesSAN: game.history(), fen: currentFen, gameResult: resultText });
+  }, []);
+
+  useEffect(() => {
+    const saved = loadGameState();
+    if (saved && saved.movesSAN.length > 0) {
+      const game = chessRef.current;
+      game.reset();
+      for (const san of saved.movesSAN) {
+        try {
+          game.move(san, { sloppy: true } as any);
+        } catch (error) {
+          console.warn("Failed to replay saved move", san, error);
+          break;
+        }
+      }
+      syncGameState();
+      if (saved.gameResult) {
+        setStatusText(saved.gameResult);
+      } else {
+        setStatusText("Game restored. Your move.");
+      }
+    }
+  }, [syncGameState]);
+
   const canPlayerMove = engineStatus === "ready" && !isProcessing && !gameResult;
   const canUndo = moves.length > 0 && !isProcessing;
 
@@ -108,6 +150,7 @@ export default function App() {
     setLastHumanMove(null);
     setGameResult(null);
     setStatusText(engineStatus === "ready" ? "Game reset. Your move as White." : "Waiting for Stockfish...");
+    clearGameState();
   }, [engineStatus]);
 
   const handleSaveApiKey = useCallback(async (value: string) => {
@@ -118,20 +161,6 @@ export default function App() {
   const handleClearApiKey = useCallback(async () => {
     await clearApiKey();
     setApiKey(null);
-  }, []);
-
-  const syncGameState = useCallback(() => {
-    const game = chessRef.current;
-    setFen(game.fen());
-    setMoves(game.history({ verbose: true }));
-
-    if (game.isGameOver()) {
-      const resultText = describeGameOutcome(game);
-      setGameResult(resultText);
-      setStatusText(resultText);
-    } else {
-      setGameResult(null);
-    }
   }, []);
 
   const handleUndo = useCallback(() => {

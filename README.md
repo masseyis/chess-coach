@@ -11,6 +11,7 @@ A minimal React + TypeScript chess coach that lets you play as White against a b
 - **Undo + replay training** so you can roll back the last attempt and try again immediately.
 - **Game controls** for new games and selecting engine search depth.
 - **GitHub Pages friendly**: automatically falls back to a single-threaded Stockfish build when `SharedArrayBuffer` isn’t available.
+- **Session persistence** so refreshes/devices keep your current game via local storage.
 
 ## Prerequisites
 
