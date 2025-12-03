@@ -110,8 +110,11 @@ function startEngine() {
 
 function startFallbackEngine() {
   try {
-    const base = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
-    const fallbackUrl = new URL(`${base}/stockfish-lite/worker.js`, import.meta.url).href;
+    const basePath = (import.meta.env.BASE_URL ?? "/").replace(/^\/+|\/+$/g, "");
+    const globalLocation = (self as unknown as { location?: Location }).location;
+    const baseUrl = globalLocation?.origin ? `${globalLocation.origin}/` : globalLocation?.href ?? "/";
+    const relativePath = `${basePath ? `${basePath}/` : ""}stockfish-lite/worker.js`;
+    const fallbackUrl = new URL(relativePath, baseUrl).toString();
     const nestedWorker = new Worker(fallbackUrl);
     nestedWorker.onmessage = (event: MessageEvent<string>) => {
       if (event.data) {
