@@ -118,6 +118,7 @@ function startFallbackEngine() {
     const nestedWorker = new Worker(fallbackUrl);
     nestedWorker.onmessage = (event: MessageEvent<string>) => {
       if (event.data) {
+        console.log("[fallback]", event.data);
         handleEngineMessage(String(event.data));
       }
     };
