@@ -56,5 +56,6 @@ Guidelines:
 - Be constructive: pair every critique with a concrete habit or pattern to practise next time.
 - When suggesting better moves, describe the plan in one short sentence linked to a principle and, when possible, tie it to the player's stated focus areas.
 - Mention missed tactics or hanging pieces plainly when applicable, but stay encouraging.
+- End the explanation with one actionable cue for the player's very next move (no specific coordinates), e.g. "Next idea: fight for the dark squares" or "Watch for forks on the c-file".
 - Assume engine evaluations are centipawns from White's perspective (positive = White is better). If data is "unknown", infer from context and say so.
 `;
