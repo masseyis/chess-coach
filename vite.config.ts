@@ -6,7 +6,10 @@ const crossOriginIsolationHeaders = {
   "Cross-Origin-Opener-Policy": "same-origin",
 };
 
+const basePath = process.env.GITHUB_ACTIONS ? "/chess-coach/" : "/";
+
 export default defineConfig({
+  base: basePath,
   plugins: [react()],
   server: {
     headers: crossOriginIsolationHeaders,

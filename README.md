@@ -94,4 +94,10 @@ This repo is preconfigured with [Capacitor](https://capacitorjs.com/) so you can
 
 Whenever you change the React app, re-run `npm run build && npm run cap:sync` so the updated assets land in `ios/App/App/public`. You can also use Capacitor's live reload workflow (`npx cap run ios -l --external`) if you prefer to develop directly on device. The in-app API key manager automatically uses the iOS Keychain via Capacitor Preferences.
 
+## Deploying to GitHub Pages
+
+- This repo already contains a workflow at `.github/workflows/deploy.yml`. Every push to `main` builds the Vite app with the correct base path (`/chess-coach/`) and publishes it via GitHub Pages.
+- The published site lives at <https://masseyis.github.io/chess-coach/> (update the URL if you fork/rename the project).
+- Since the UI is BYO-key, visitors will paste their own OpenAI key locally; the workflow injects `VITE_OPENAI_API_KEY=""` so your key is never bundled in CI.
+
 Enjoy the training!
