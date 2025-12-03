@@ -44,9 +44,9 @@ type ErrorMessage = { type: "error"; id?: string; message: string };
 type Outgoing = EvaluationMessage | ReadyMessage | ErrorMessage;
 
 const ctx = self as DedicatedWorkerGlobalScope;
-ctx.onclose = () => {
+ctx.addEventListener("close", () => {
   engineAdapter?.dispose();
-};
+});
 
 let engine: StockfishInstance | null = null;
 type EngineAdapter = {
@@ -98,7 +98,7 @@ function startEngine() {
       engine = instance as StockfishInstance;
       engineAdapter = {
         send: (command: string) => engine?.postMessage(command),
-        dispose: () => engine?.terminate?.(),
+        dispose: () => {},
       };
       engine.addMessageListener(handleEngineMessage);
       sendCommand("uci");
