@@ -186,7 +186,7 @@ function processQueue() {
 }
 
 function startSearch(job: EvaluateJob) {
-  if (!engine) return;
+  if (!engineAdapter) return;
   sendCommand("ucinewgame");
   sendCommand(`position fen ${job.fen}`);
   if (job.movetime) {
