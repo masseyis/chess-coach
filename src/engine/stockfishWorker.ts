@@ -116,10 +116,11 @@ function startFallbackEngine() {
     const normalizedBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
     const fallbackUrl = `${origin}${normalizedBase}stockfish-lite/worker.js`;
     const nestedWorker = new Worker(fallbackUrl);
-    nestedWorker.onmessage = (event: MessageEvent<string>) => {
-      if (event.data) {
-        console.log("[fallback]", event.data);
-        handleEngineMessage(String(event.data));
+    nestedWorker.onmessage = (event) => {
+      const payload = typeof event.data === "string" ? event.data : (event.data && typeof event.data.data === "string" ? event.data.data : null);
+      if (payload) {
+        console.log("[fallback]", payload);
+        handleEngineMessage(payload);
       }
     };
     nestedWorker.onerror = (err) => {
