@@ -93,5 +93,6 @@ The icon/bundle installs offline support via the built-in service worker, and yo
 - Since the UI is BYO-key, visitors will paste their own OpenAI key locally; the workflow injects `VITE_OPENAI_API_KEY=""` so your key is never bundled in CI.
 
 Enjoy the training!
+- If this coach helps your chess, consider buying me a coffee: https://ko-fi.com/masseyis ☕️
 - Engine depth ≈ how far Stockfish searches; higher depths play stronger (e.g., depth 4 ~500 Elo, depth 14 ~1500 Elo) but may take a little longer to reply.
 - Game summaries appear after the result (win/loss/draw) with a headline, recap, and 2–3 concrete practice ideas.
