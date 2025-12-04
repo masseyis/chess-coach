@@ -8,6 +8,8 @@ type Props = {
   engineStatus: "booting" | "ready" | "error";
   onUndo: () => void;
   disableUndo?: boolean;
+  onRetire: () => void;
+  disableRetire?: boolean;
 };
 
 const DEPTH_OPTIONS = [
@@ -19,7 +21,7 @@ const DEPTH_OPTIONS = [
   { value: 14, label: "Depth 14 · Tough (~1500 Elo)" },
 ];
 
-export function Controls({ engineDepth, onDepthChange, onNewGame, disableNewGame, engineStatus, onUndo, disableUndo }: Props) {
+export function Controls({ engineDepth, onDepthChange, onNewGame, disableNewGame, engineStatus, onUndo, disableUndo, onRetire, disableRetire }: Props) {
   const handleDepthChange = (event: ChangeEvent<HTMLSelectElement>) => {
     onDepthChange(Number(event.target.value));
   };
@@ -45,6 +47,9 @@ export function Controls({ engineDepth, onDepthChange, onNewGame, disableNewGame
       </button>
       <button className="secondary-btn" onClick={onUndo} disabled={disableUndo}>
         Undo move
+      </button>
+      <button className="danger-btn" onClick={onRetire} disabled={disableRetire}>
+        Retire
       </button>
       <span className={`engine-status engine-status-${engineStatus}`}>{statusLabel}</span>
     </div>

@@ -9,6 +9,7 @@ A minimal React + TypeScript chess coach that lets you play as White against a b
 - **Coaching feedback** after each human move (grade, explanation, better moves, highlighted principles) with positive reinforcement.
 - **Eval tracking** so the UI shows the current engine assessment from White's perspective.
 - **Undo + replay training** so you can roll back the last attempt and try again immediately.
+- **Retire button** if you want to resign and keep the current position for study.
 - **Game controls** for new games and selecting engine search depth.
 - **GitHub Pages friendly**: automatically falls back to a single-threaded Stockfish build when `SharedArrayBuffer` isn’t available.
 - **Session persistence** so refreshes/devices keep your current game via local storage.

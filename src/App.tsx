@@ -175,6 +175,7 @@ export default function App() {
 
   const canPlayerMove = engineStatus === "ready" && !isProcessing && !gameResult;
   const canUndo = moves.length > 0 && !isProcessing;
+  const canRetire = !isProcessing && !gameResult;
 
   const handleNewGame = useCallback(() => {
     const game = chessRef.current;
@@ -200,6 +201,16 @@ export default function App() {
     await clearApiKey();
     setApiKey(null);
   }, []);
+
+  const handleRetire = useCallback(() => {
+    if (gameResult) return;
+    const game = chessRef.current;
+    const resultText = "You retired from this game.";
+    setGameResult(resultText);
+    setStatusText(resultText);
+    setSummaryState({ status: "idle" });
+    saveGameState({ movesSAN: game.history(), fen: game.fen(), gameResult: resultText });
+  }, [gameResult]);
 
   const handleUndo = useCallback(() => {
     if (isProcessing) return;
@@ -399,6 +410,8 @@ export default function App() {
           engineStatus={engineStatus}
           onUndo={handleUndo}
           disableUndo={!canUndo}
+          onRetire={handleRetire}
+          disableRetire={!canRetire}
         />
       </header>
 
