@@ -387,6 +387,9 @@ export default function App() {
         <div>
           <h1>Chess Coach</h1>
           <p className="subtitle">Play vs. Stockfish and get feedback after every move.</p>
+          <p className="support-note">
+            If this helps your chess, consider supporting me on <a href="https://ko-fi.com/masseyis" target="_blank" rel="noreferrer">Ko-fi</a> ☕️
+          </p>
         </div>
         <Controls
           engineDepth={engineDepth}

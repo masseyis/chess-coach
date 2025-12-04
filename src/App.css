@@ -23,6 +23,16 @@
   color: var(--text-muted);
 }
 
+.support-note {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.support-note a {
+  color: var(--accent);
+}
+
 .controls-panel {
   display: flex;
   align-items: center;
