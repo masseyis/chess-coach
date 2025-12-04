@@ -6,14 +6,16 @@ import { Controls } from "./components/Controls";
 import { EvaluationPanel } from "./components/EvaluationPanel";
 import { MoveList } from "./components/MoveList";
 import { ApiKeyManager } from "./components/ApiKeyManager";
+import { GameSummaryCard } from "./components/GameSummary";
 import { StockfishService } from "./engine/stockfishService";
 import type { EngineEvaluation, NormalizedEvaluation } from "./types/engine";
 import type {
   CoachingHistoryEntry,
   CoachingPanelState,
   CoachingResponse,
+  GameSummaryState,
 } from "./types/coaching";
-import { getMoveCoaching } from "./lib/openaiClient";
+import { getGameSummary, getMoveCoaching } from "./lib/openaiClient";
 import {
   describeGameOutcome,
   formatEvalLabel,
@@ -44,6 +46,7 @@ export default function App() {
   const [coachingState, setCoachingState] = useState<CoachingPanelState>({ status: "idle" });
   const [lastFeedback, setLastFeedback] = useState<CoachingResponse | null>(null);
   const [coachingHistory, setCoachingHistory] = useState<CoachingHistoryEntry[]>([]);
+  const [summaryState, setSummaryState] = useState<GameSummaryState>({ status: "idle" });
   const [apiKey, setApiKey] = useState<string | null>(import.meta.env.VITE_OPENAI_API_KEY ?? null);
   const [apiKeyReady, setApiKeyReady] = useState(false);
   const [lastHumanMove, setLastHumanMove] = useState<Move | null>(null);
@@ -134,6 +137,41 @@ export default function App() {
       }
     }
   }, [syncGameState]);
+
+  const lastSummaryRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!gameResult) {
+      setSummaryState({ status: "idle" });
+      lastSummaryRef.current = null;
+      return;
+    }
+    if (!apiKey) {
+      setSummaryState({ status: "error", message: "Add your API key to get a game summary." });
+      return;
+    }
+    const pgn = chessRef.current.pgn();
+    if (!pgn || lastSummaryRef.current === pgn) return;
+    setSummaryState({ status: "loading" });
+    lastSummaryRef.current = pgn;
+    const highlights = coachingHistory.slice(-6).map((entry) => `${entry.moveSan}: ${entry.response.shortLabel}`);
+
+    getGameSummary(
+      {
+        pgn,
+        highlights,
+        result: gameResult,
+      },
+      apiKey,
+    )
+      .then((summary) => {
+        setSummaryState({ status: "ready", payload: summary });
+      })
+      .catch((error) => {
+        console.error(error);
+        setSummaryState({ status: "error", message: "Summary unavailable (API error)." });
+      });
+  }, [apiKey, coachingHistory, gameResult]);
 
   const canPlayerMove = engineStatus === "ready" && !isProcessing && !gameResult;
   const canUndo = moves.length > 0 && !isProcessing;
@@ -378,6 +416,7 @@ export default function App() {
             gameResult={gameResult}
           />
           <MoveList moves={moves} />
+          <GameSummaryCard state={summaryState} gameResult={gameResult} />
         </div>
 
         <EvaluationPanel

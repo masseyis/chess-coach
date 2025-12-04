@@ -51,3 +51,15 @@ export type CoachingPanelState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "ready"; payload: CoachingResponse; moveSan: string; scoreChange?: number | null };
+
+export type GameSummaryResponse = {
+  headline: string;
+  summary: string;
+  practiceIdeas: string[];
+};
+
+export type GameSummaryState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; payload: GameSummaryResponse };
