@@ -27,7 +27,7 @@ import { clearApiKey, loadApiKey, saveApiKey } from "./lib/apiKeyStorage";
 import { clearGameState, loadGameState, saveGameState } from "./lib/gameStorage";
 import "./App.css";
 
-const DEFAULT_DEPTH = 10;
+const DEFAULT_DEPTH = 8;
 
 type EngineStatus = "booting" | "ready" | "error";
 

@@ -12,6 +12,7 @@ A minimal React + TypeScript chess coach that lets you play as White against a b
 - **Game controls** for new games and selecting engine search depth.
 - **GitHub Pages friendly**: automatically falls back to a single-threaded Stockfish build when `SharedArrayBuffer` isn’t available.
 - **Session persistence** so refreshes/devices keep your current game via local storage.
+- **Difficulty slider**: adjust Stockfish search depth (rough Elo ranges shown) to match your level.
 
 ## Prerequisites
 
@@ -91,3 +92,4 @@ The icon/bundle installs offline support via the built-in service worker, and yo
 - Since the UI is BYO-key, visitors will paste their own OpenAI key locally; the workflow injects `VITE_OPENAI_API_KEY=""` so your key is never bundled in CI.
 
 Enjoy the training!
+- Engine depth ≈ how far Stockfish searches; higher depths play stronger (e.g., depth 4 ~500 Elo, depth 14 ~1500 Elo) but may take a little longer to reply.

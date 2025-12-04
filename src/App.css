@@ -37,6 +37,12 @@
   color: var(--text-muted);
 }
 
+.control-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
 .control-select {
   margin-top: 0.25rem;
   min-width: 180px;

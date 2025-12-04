@@ -11,9 +11,12 @@ type Props = {
 };
 
 const DEPTH_OPTIONS = [
-  { value: 6, label: "Casual (depth 6)" },
-  { value: 10, label: "Trainer (depth 10)" },
-  { value: 14, label: "Challenging (depth 14)" },
+  { value: 4, label: "Depth 4 · Learner (~500 Elo)" },
+  { value: 6, label: "Depth 6 · Casual (~700 Elo)" },
+  { value: 8, label: "Depth 8 · Club (~900 Elo)" },
+  { value: 10, label: "Depth 10 · Trainer (~1100 Elo)" },
+  { value: 12, label: "Depth 12 · Strong (~1300 Elo)" },
+  { value: 14, label: "Depth 14 · Tough (~1500 Elo)" },
 ];
 
 export function Controls({ engineDepth, onDepthChange, onNewGame, disableNewGame, engineStatus, onUndo, disableUndo }: Props) {
@@ -35,6 +38,7 @@ export function Controls({ engineDepth, onDepthChange, onNewGame, disableNewGame
             </option>
           ))}
         </select>
+        <span className="control-hint">Higher depth = stronger but slower engine (rough Elo shown).</span>
       </label>
       <button className="primary-btn" onClick={onNewGame} disabled={disableNewGame}>
         New Game
