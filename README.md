@@ -13,7 +13,7 @@ A minimal React + TypeScript chess coach that lets you play as White against a b
 - **Game controls** for new games and selecting engine search depth.
 - **GitHub Pages friendly**: automatically falls back to a single-threaded Stockfish build when `SharedArrayBuffer` isn’t available.
 - **Session persistence** so refreshes/devices keep your current game via local storage.
-- **Difficulty slider**: adjust Stockfish search depth (rough Elo ranges shown) to match your level.
+- **Difficulty slider**: adjust Stockfish search depth (rough Elo ranges shown) to match your level, and your choice sticks between sessions.
 - **Coach recap** once a game ends, summarizing key habits to practice next.
 
 ## Prerequisites

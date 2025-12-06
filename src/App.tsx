@@ -30,6 +30,7 @@ import { clearGameState, loadGameState, saveGameState } from "./lib/gameStorage"
 import "./App.css";
 
 const DEFAULT_DEPTH = 8;
+const DEPTH_STORAGE_KEY = "chesscoach_engine_depth";
 
 type EngineStatus = "booting" | "ready" | "error";
 
@@ -137,6 +138,28 @@ export default function App() {
       }
     }
   }, [syncGameState]);
+
+  useEffect(() => {
+    try {
+      const savedDepth = localStorage.getItem(DEPTH_STORAGE_KEY);
+      if (savedDepth) {
+        const parsed = Number(savedDepth);
+        if (!Number.isNaN(parsed)) {
+          setEngineDepth(parsed);
+        }
+      }
+    } catch (error) {
+      console.warn("Unable to read depth preference", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DEPTH_STORAGE_KEY, String(engineDepth));
+    } catch (error) {
+      console.warn("Unable to persist depth preference", error);
+    }
+  }, [engineDepth]);
 
   const lastSummaryRef = useRef<string | null>(null);
 
