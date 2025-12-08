@@ -53,6 +53,10 @@ export class StockfishService {
     });
   }
 
+  configure(options: { skillLevel?: number }) {
+    this.worker.postMessage({ type: "configure", payload: options });
+  }
+
   subscribe(listener: (event: StockfishEvent) => void) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);

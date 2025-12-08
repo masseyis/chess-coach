@@ -30,6 +30,14 @@ import { clearGameState, loadGameState, saveGameState } from "./lib/gameStorage"
 import "./App.css";
 
 const DEFAULT_DEPTH = 8;
+const depthToSkillLevel: Record<number, number> = {
+  4: 2,
+  6: 5,
+  8: 8,
+  10: 12,
+  12: 16,
+  14: 20,
+};
 const DEPTH_STORAGE_KEY = "chesscoach_engine_depth";
 
 type EngineStatus = "booting" | "ready" | "error";
@@ -159,7 +167,11 @@ export default function App() {
     } catch (error) {
       console.warn("Unable to persist depth preference", error);
     }
-  }, [engineDepth]);
+    if (engineStatus === "ready") {
+      const skill = depthToSkillLevel[engineDepth] ?? 10;
+      engineRef.current?.configure({ skillLevel: skill });
+    }
+  }, [engineDepth, engineStatus]);
 
   const lastSummaryRef = useRef<string | null>(null);
 
