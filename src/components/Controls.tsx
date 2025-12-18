@@ -13,7 +13,7 @@ type Props = {
 };
 
 const DEPTH_OPTIONS = [
-  { value: 4, label: "Depth 4 · Learner (~500 Elo)" },
+  { value: 4, label: "Depth 4 · Beginner (~450 Elo, frequent blunders)" },
   { value: 6, label: "Depth 6 · Casual (~700 Elo)" },
   { value: 8, label: "Depth 8 · Club (~900 Elo)" },
   { value: 10, label: "Depth 10 · Trainer (~1100 Elo)" },

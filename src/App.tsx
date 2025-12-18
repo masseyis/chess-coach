@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
-import type { Move, Square } from "chess.js";
+import type { Move, PieceSymbol, Square } from "chess.js";
 import { ChessBoardPanel } from "./components/ChessBoardPanel";
 import { Controls } from "./components/Controls";
 import { EvaluationPanel } from "./components/EvaluationPanel";
@@ -31,7 +31,7 @@ import "./App.css";
 
 const DEFAULT_DEPTH = 8;
 const depthToSkillLevel: Record<number, number> = {
-  4: 2,
+  4: 0,
   6: 5,
   8: 8,
   10: 12,
@@ -39,6 +39,68 @@ const depthToSkillLevel: Record<number, number> = {
   14: 20,
 };
 const DEPTH_STORAGE_KEY = "chesscoach_engine_depth";
+
+const EASY_ENGINE_DEPTH = 4;
+
+type MoveDescriptor = {
+  from: Square;
+  to: Square;
+  promotion?: PieceSymbol;
+};
+
+function movesMatchDescriptor(move: Move, descriptor: MoveDescriptor) {
+  const promotion = (move.promotion ?? undefined) as PieceSymbol | undefined;
+  return move.from === descriptor.from && move.to === descriptor.to && promotion === descriptor.promotion;
+}
+
+function moveToDescriptor(move: Move): MoveDescriptor {
+  return {
+    from: move.from as Square,
+    to: move.to as Square,
+    promotion: (move.promotion ?? undefined) as PieceSymbol | undefined,
+  };
+}
+
+function randomChoice<T>(list: T[]): T {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function pickMoveForDifficulty(game: Chess, bestMove: string | null, engineDepth: number): MoveDescriptor | null {
+  const legalMoves = game.moves({ verbose: true }) as Move[];
+  if (legalMoves.length === 0) return null;
+
+  const bestDescriptor = bestMove ? uciToMoveDescriptor(bestMove) : null;
+  if (!bestDescriptor) {
+    return moveToDescriptor(randomChoice(legalMoves));
+  }
+
+  if (engineDepth > EASY_ENGINE_DEPTH) {
+    return bestDescriptor;
+  }
+
+  const alternativeMoves = legalMoves.filter((move) => !movesMatchDescriptor(move, bestDescriptor));
+  if (alternativeMoves.length === 0) {
+    return bestDescriptor;
+  }
+
+  const quietAlternatives = alternativeMoves.filter((move) => !move.flags.includes("c") && !move.san.includes("+"));
+  const forcingAlternatives = alternativeMoves.filter((move) => move.flags.includes("c") || move.san.includes("+"));
+  const roll = Math.random();
+
+  if (quietAlternatives.length && roll < 0.6) {
+    return moveToDescriptor(randomChoice(quietAlternatives));
+  }
+
+  if (forcingAlternatives.length && roll < 0.85) {
+    return moveToDescriptor(randomChoice(forcingAlternatives));
+  }
+
+  if (roll < 0.95) {
+    return moveToDescriptor(randomChoice(alternativeMoves));
+  }
+
+  return bestDescriptor;
+}
 
 type EngineStatus = "booting" | "ready" | "error";
 
@@ -289,16 +351,9 @@ export default function App() {
         return;
       }
 
-      if (!bestMove) {
-        setStatusText("Engine has no legal reply. Your move.");
-        syncGameState();
-        return;
-      }
-
-      const moveDescriptor = uciToMoveDescriptor(bestMove);
+      const moveDescriptor = pickMoveForDifficulty(chessRef.current, bestMove ?? null, engineDepth);
       if (!moveDescriptor) {
-        console.warn("Unable to parse engine move", bestMove);
-        setStatusText("Engine response unavailable.");
+        setStatusText("Engine has no legal reply. Your move.");
         syncGameState();
         return;
       }
@@ -313,7 +368,7 @@ export default function App() {
       syncGameState();
       setStatusText(chessRef.current.isGameOver() ? describeGameOutcome(chessRef.current) : "Your turn.");
     },
-    [syncGameState],
+    [engineDepth, syncGameState],
   );
 
   const handleEvaluationResults = useCallback(

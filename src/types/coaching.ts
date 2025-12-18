@@ -44,6 +44,14 @@ export type CoachingResponse = {
     why: string;
   }>;
   principles: CoachingPrincipleId[];
+  principleResources?: PrincipleResourceLink[];
+};
+
+export type PrincipleResourceLink = {
+  principle: CoachingPrincipleId;
+  title: string;
+  url: string;
+  summary: string;
 };
 
 export type CoachingPanelState =

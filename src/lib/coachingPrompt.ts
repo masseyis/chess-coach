@@ -1,35 +1,76 @@
 import type { CoachingPrincipleId } from "../types/coaching";
 
-export const COACHING_PRINCIPLES: Record<CoachingPrincipleId, { label: string; description: string }> = {
+type PrincipleMeta = {
+  label: string;
+  description: string;
+  resource: {
+    title: string;
+    url: string;
+  };
+};
+
+export const COACHING_PRINCIPLES: Record<CoachingPrincipleId, PrincipleMeta> = {
   centre_control: {
     label: "Center control",
     description: "Occupy or influence the central squares (d4, d5, e4, e5) with pawns and pieces.",
+    resource: {
+      title: "Why the center matters",
+      url: "/resources/center-control.html",
+    },
   },
   piece_activity: {
     label: "Piece activity",
     description: "Coordinate pieces so they have targets, open lines, and no pieces are sleeping on the back rank.",
+    resource: {
+      title: "Activate your pieces",
+      url: "/resources/piece-activity.html",
+    },
   },
   king_safety: {
     label: "King safety",
     description: "Castle in time, keep a pawn shield, and do not loosen squares near your king.",
+    resource: {
+      title: "Keep your king safe",
+      url: "/resources/king-safety.html",
+    },
   },
   tactics: {
     label: "Tactics awareness",
     description: "Avoid hanging pieces and watch for forks, pins, skewers, and basic winning tactics.",
+    resource: {
+      title: "Spot basic tactics",
+      url: "/resources/tactics-basics.html",
+    },
   },
   trading_when_ahead: {
     label: "Trade when ahead",
     description: "Exchange pieces (not pawns) when you are up material to simplify into a winning endgame.",
+    resource: {
+      title: "When to trade pieces",
+      url: "/resources/trading-when-ahead.html",
+    },
   },
   rook_activity: {
     label: "Rook activity",
     description: "Place rooks on open/semi-open files or the 7th rank where they can infiltrate.",
+    resource: {
+      title: "Energize your rooks",
+      url: "/resources/rook-activity.html",
+    },
   },
   king_attack: {
     label: "Coordinated attack",
     description: "Bring at least three pieces to attack the king when it is exposed.",
+    resource: {
+      title: "Coordinate a king attack",
+      url: "/resources/king-attack.html",
+    },
   },
 };
+
+const PRINCIPLE_RESOURCE_GUIDE = Object.entries(COACHING_PRINCIPLES)
+  .map(([id, meta]) => `- ${id}: ${meta.resource.title} (${meta.resource.url})`)
+  .join("\n");
 
 export const COACHING_SYSTEM_PROMPT = `You are a supportive chess coach for an adult improver (~800 Elo).
 Respond in valid JSON only (no prose outside the JSON object) following this TypeScript shape:
@@ -39,14 +80,19 @@ Respond in valid JSON only (no prose outside the JSON object) following this Typ
   "shortLabel": string,
   "explanation": string,
   "betterMoves": [{"move": string, "why": string}], // max 2 suggestions
-  "principles": CoachingPrincipleId[] // IDs from the fixed list below
+  "principles": CoachingPrincipleId[], // IDs from the fixed list below
+  "principleResources": Array<{"principle": CoachingPrincipleId, "title": string, "url": string, "summary": string }>
 }
 
 Guidelines:
 - Use the provided recentMoves, recentFeedback, and playerContextSummary to remember the player's patterns and tailor your advice.
 - Always begin with one encouraging observation (even for flawed moves). Reinforce what they attempted or a recurring strength.
+- Always include at least one item in betterMoves. When engineBestMoveAfter is available (not "unknown"), the first suggestion must reference that exact move string and explain why it was superior, tying it to a principle.
 - Follow with a clear explanation of the issue, referencing the most relevant principles (IDs below) in simple language.
 - Mention only these principles by ID: centre_control, piece_activity, king_safety, tactics, trading_when_ahead, rook_activity, king_attack.
+- Whenever you cite a principle, mirror it in principleResources with a concise 1-sentence summary (<=25 words) and the EXACT URL + title from the resource list below.
+- Resource list (use verbatim):
+${PRINCIPLE_RESOURCE_GUIDE}
 - Move grading thresholds (difference = eval_after - eval_before, in pawns):
   great: +0.5 or more improvement or simplifies a winning position
   good: within ±0.5 of best

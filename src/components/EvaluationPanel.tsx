@@ -1,4 +1,4 @@
-import type { CoachingPanelState, CoachingResponse, CoachingPrincipleId } from "../types/coaching";
+import type { CoachingPanelState, CoachingResponse, CoachingPrincipleId, PrincipleResourceLink } from "../types/coaching";
 import { COACHING_PRINCIPLES } from "../lib/coachingPrompt";
 
 const gradeLabels: Record<string, string> = {
@@ -96,6 +96,8 @@ function renderCoachingBody(
 }
 
 function renderFeedback(feedback: CoachingResponse, scoreChange: number | null | undefined) {
+  const principleResources = getPrincipleResources(feedback);
+
   return (
     <div className="feedback-body">
       <p className="short-label">{feedback.shortLabel}</p>
@@ -130,12 +132,49 @@ function renderFeedback(feedback: CoachingResponse, scoreChange: number | null |
           </div>
         </div>
       )}
+      {principleResources.length > 0 && (
+        <div className="principle-resources">
+          <h3>Learn more</h3>
+          <ul>
+            {principleResources.map((resource) => (
+              <li key={`${resource.principle}-${resource.url}`}>
+                <a href={resource.url} target="_blank" rel="noreferrer">
+                  {resource.title}
+                </a>
+                <span>{resource.summary}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
 
 function principleLabel(id: CoachingPrincipleId) {
   return COACHING_PRINCIPLES[id]?.label ?? id;
+}
+
+function getPrincipleResources(feedback: CoachingResponse): PrincipleResourceLink[] {
+  if (feedback.principleResources && feedback.principleResources.length > 0) {
+    return feedback.principleResources;
+  }
+
+  const seen = new Set<string>();
+  return feedback.principles
+    .map((principle) => {
+      if (seen.has(principle)) return null;
+      seen.add(principle);
+      const meta = COACHING_PRINCIPLES[principle];
+      if (!meta) return null;
+      return {
+        principle,
+        title: meta.resource.title,
+        url: meta.resource.url,
+        summary: meta.description,
+      };
+    })
+    .filter((link): link is PrincipleResourceLink => Boolean(link));
 }
 
 function formatPawnDelta(value: number) {
