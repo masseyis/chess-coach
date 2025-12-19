@@ -1,8 +1,9 @@
 import type { ChangeEvent } from "react";
 
 type Props = {
-  engineDepth: number;
-  onDepthChange: (depth: number) => void;
+  difficultyId: string;
+  difficultyOptions: Array<{ id: string; label: string }>;
+  onDifficultyChange: (difficultyId: string) => void;
   onNewGame: () => void;
   disableNewGame?: boolean;
   engineStatus: "booting" | "ready" | "error";
@@ -11,19 +12,9 @@ type Props = {
   onRetire: () => void;
   disableRetire?: boolean;
 };
-
-const DEPTH_OPTIONS = [
-  { value: 4, label: "Depth 4 · Beginner (~450 Elo, frequent blunders)" },
-  { value: 6, label: "Depth 6 · Casual (~700 Elo)" },
-  { value: 8, label: "Depth 8 · Club (~900 Elo)" },
-  { value: 10, label: "Depth 10 · Trainer (~1100 Elo)" },
-  { value: 12, label: "Depth 12 · Strong (~1300 Elo)" },
-  { value: 14, label: "Depth 14 · Tough (~1500 Elo)" },
-];
-
-export function Controls({ engineDepth, onDepthChange, onNewGame, disableNewGame, engineStatus, onUndo, disableUndo, onRetire, disableRetire }: Props) {
+export function Controls({ difficultyId, difficultyOptions, onDifficultyChange, onNewGame, disableNewGame, engineStatus, onUndo, disableUndo, onRetire, disableRetire }: Props) {
   const handleDepthChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    onDepthChange(Number(event.target.value));
+    onDifficultyChange(event.target.value);
   };
 
   const statusLabel =
@@ -33,9 +24,9 @@ export function Controls({ engineDepth, onDepthChange, onNewGame, disableNewGame
     <div className="controls-panel">
       <label className="select-label">
         Engine depth
-        <select value={engineDepth} onChange={handleDepthChange} className="control-select" disabled={engineStatus !== "ready"}>
-          {DEPTH_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
+        <select value={difficultyId} onChange={handleDepthChange} className="control-select" disabled={engineStatus !== "ready"}>
+          {difficultyOptions.map((option) => (
+            <option key={option.id} value={option.id}>
               {option.label}
             </option>
           ))}

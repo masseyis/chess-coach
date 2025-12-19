@@ -27,20 +27,11 @@ import {
 import { buildRecentFeedbackMemory, summarizeCoachingHistory } from "./lib/coachingHistory";
 import { clearApiKey, loadApiKey, saveApiKey } from "./lib/apiKeyStorage";
 import { clearGameState, loadGameState, saveGameState } from "./lib/gameStorage";
+import { DEFAULT_DIFFICULTY_ID, ENGINE_DIFFICULTIES, findDifficultyById, findLegacyDepthDifficulty, type ImperfectionProfile } from "./lib/engineDifficulty";
 import "./App.css";
 
-const DEFAULT_DEPTH = 8;
-const depthToSkillLevel: Record<number, number> = {
-  4: 0,
-  6: 5,
-  8: 8,
-  10: 12,
-  12: 16,
-  14: 20,
-};
 const DEPTH_STORAGE_KEY = "chesscoach_engine_depth";
-
-const EASY_ENGINE_DEPTH = 4;
+const DEFAULT_DIFFICULTY = findDifficultyById(DEFAULT_DIFFICULTY_ID) ?? ENGINE_DIFFICULTIES[0];
 
 type MoveDescriptor = {
   from: Square;
@@ -65,7 +56,7 @@ function randomChoice<T>(list: T[]): T {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-function pickMoveForDifficulty(game: Chess, bestMove: string | null, engineDepth: number): MoveDescriptor | null {
+function pickMoveForDifficulty(game: Chess, bestMove: string | null, profile?: ImperfectionProfile | null): MoveDescriptor | null {
   const legalMoves = game.moves({ verbose: true }) as Move[];
   if (legalMoves.length === 0) return null;
 
@@ -74,7 +65,7 @@ function pickMoveForDifficulty(game: Chess, bestMove: string | null, engineDepth
     return moveToDescriptor(randomChoice(legalMoves));
   }
 
-  if (engineDepth > EASY_ENGINE_DEPTH) {
+  if (!profile) {
     return bestDescriptor;
   }
 
@@ -85,18 +76,27 @@ function pickMoveForDifficulty(game: Chess, bestMove: string | null, engineDepth
 
   const quietAlternatives = alternativeMoves.filter((move) => !move.flags.includes("c") && !move.san.includes("+"));
   const forcingAlternatives = alternativeMoves.filter((move) => move.flags.includes("c") || move.san.includes("+"));
-  const roll = Math.random();
+  const buckets = [
+    { moves: quietAlternatives, weight: profile.quiet },
+    { moves: forcingAlternatives, weight: profile.forcing },
+    { moves: alternativeMoves, weight: profile.random },
+  ].filter((bucket) => bucket.moves.length > 0 && bucket.weight > 0);
 
-  if (quietAlternatives.length && roll < 0.6) {
-    return moveToDescriptor(randomChoice(quietAlternatives));
+  const bestWeight = bestDescriptor ? Math.max(0, profile.best) : 0;
+  const totalWeight = buckets.reduce((sum, bucket) => sum + bucket.weight, 0) + bestWeight;
+
+  if (totalWeight <= 0) {
+    return bestDescriptor;
   }
 
-  if (forcingAlternatives.length && roll < 0.85) {
-    return moveToDescriptor(randomChoice(forcingAlternatives));
-  }
+  const roll = Math.random() * totalWeight;
+  let cumulative = 0;
 
-  if (roll < 0.95) {
-    return moveToDescriptor(randomChoice(alternativeMoves));
+  for (const bucket of buckets) {
+    cumulative += bucket.weight;
+    if (roll < cumulative) {
+      return moveToDescriptor(randomChoice(bucket.moves));
+    }
   }
 
   return bestDescriptor;
@@ -112,7 +112,12 @@ export default function App() {
   const [moves, setMoves] = useState<Move[]>(chessRef.current.history({ verbose: true }));
   const [engineStatus, setEngineStatus] = useState<EngineStatus>("booting");
   const [engineMessage, setEngineMessage] = useState<string>("Starting Stockfish...");
-  const [engineDepth, setEngineDepth] = useState(DEFAULT_DEPTH);
+  const [difficultyId, setDifficultyId] = useState(DEFAULT_DIFFICULTY.id);
+  const selectedDifficulty = useMemo(
+    () => findDifficultyById(difficultyId) ?? DEFAULT_DIFFICULTY,
+    [difficultyId],
+  );
+  const engineDepth = selectedDifficulty.engineDepth;
   const [currentEval, setCurrentEval] = useState<NormalizedEvaluation | null>(null);
   const [coachingState, setCoachingState] = useState<CoachingPanelState>({ status: "idle" });
   const [lastFeedback, setLastFeedback] = useState<CoachingResponse | null>(null);
@@ -212,10 +217,19 @@ export default function App() {
   useEffect(() => {
     try {
       const savedDepth = localStorage.getItem(DEPTH_STORAGE_KEY);
-      if (savedDepth) {
-        const parsed = Number(savedDepth);
-        if (!Number.isNaN(parsed)) {
-          setEngineDepth(parsed);
+      if (!savedDepth) return;
+
+      const matchedById = findDifficultyById(savedDepth);
+      if (matchedById) {
+        setDifficultyId(matchedById.id);
+        return;
+      }
+
+      const parsed = Number(savedDepth);
+      if (!Number.isNaN(parsed)) {
+        const legacy = findLegacyDepthDifficulty(parsed);
+        if (legacy) {
+          setDifficultyId(legacy.id);
         }
       }
     } catch (error) {
@@ -225,15 +239,14 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(DEPTH_STORAGE_KEY, String(engineDepth));
+      localStorage.setItem(DEPTH_STORAGE_KEY, selectedDifficulty.id);
     } catch (error) {
       console.warn("Unable to persist depth preference", error);
     }
     if (engineStatus === "ready") {
-      const skill = depthToSkillLevel[engineDepth] ?? 10;
-      engineRef.current?.configure({ skillLevel: skill });
+      engineRef.current?.configure({ skillLevel: selectedDifficulty.skillLevel });
     }
-  }, [engineDepth, engineStatus]);
+  }, [selectedDifficulty, engineStatus]);
 
   const lastSummaryRef = useRef<string | null>(null);
 
@@ -351,7 +364,11 @@ export default function App() {
         return;
       }
 
-      const moveDescriptor = pickMoveForDifficulty(chessRef.current, bestMove ?? null, engineDepth);
+      const moveDescriptor = pickMoveForDifficulty(
+        chessRef.current,
+        bestMove ?? null,
+        selectedDifficulty.imperfectionProfile,
+      );
       if (!moveDescriptor) {
         setStatusText("Engine has no legal reply. Your move.");
         syncGameState();
@@ -368,7 +385,7 @@ export default function App() {
       syncGameState();
       setStatusText(chessRef.current.isGameOver() ? describeGameOutcome(chessRef.current) : "Your turn.");
     },
-    [engineDepth, syncGameState],
+    [selectedDifficulty, syncGameState],
   );
 
   const handleEvaluationResults = useCallback(
@@ -493,8 +510,9 @@ export default function App() {
           </p>
         </div>
         <Controls
-          engineDepth={engineDepth}
-          onDepthChange={setEngineDepth}
+          difficultyId={selectedDifficulty.id}
+          difficultyOptions={ENGINE_DIFFICULTIES}
+          onDifficultyChange={setDifficultyId}
           onNewGame={handleNewGame}
           disableNewGame={isProcessing}
           engineStatus={engineStatus}
