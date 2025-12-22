@@ -37,10 +37,10 @@ export const ENGINE_DIFFICULTIES: EngineDifficulty[] = [
   },
   {
     id: "depth-5-imperfect-1",
-    label: "Depth 5 · Imperfect I (~620 Elo, occasional slips)",
+    label: "Depth 5 · Imperfect I (~650 Elo, occasional slips)",
     engineDepth: 5,
-    skillLevel: 4,
-    imperfectionProfile: { quiet: 0.25, forcing: 0.15, random: 0.05, best: 0.55 },
+    skillLevel: 5,
+    imperfectionProfile: { quiet: 0.18, forcing: 0.12, random: 0.03, best: 0.67 },
   },
   {
     id: "depth-6",
