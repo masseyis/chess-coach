@@ -26,7 +26,9 @@ function InsightsBody({ history }: { history: CoachInsightEntry[] }) {
   const previousElo = getPreviousEstimatedElo(history);
   const eloDelta = latestElo !== null && previousElo !== null ? latestElo - previousElo : null;
   const principleLeaders = getPrincipleLeaders(history);
+  const practiceHighlights = getPracticeIdeaLeaders(history);
   const { sampleSize, averages } = getGradeAverages(history);
+  const eloSeries = getEloSeries(history);
 
   return (
     <div>
@@ -44,6 +46,7 @@ function InsightsBody({ history }: { history: CoachInsightEntry[] }) {
             )}
           </p>
         )}
+        {eloSeries.length >= 2 && <Sparkline values={eloSeries} />}
         <p className="muted">Tracking {history.length} completed {history.length === 1 ? "game" : "games"}.</p>
       </section>
 
@@ -56,6 +59,22 @@ function InsightsBody({ history }: { history: CoachInsightEntry[] }) {
             {principleLeaders.map(([id, count]) => (
               <li key={id}>
                 <strong>{principleLabel(id)}</strong> — flagged {count} {count === 1 ? "time" : "times"}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section>
+        <h4>Practice themes</h4>
+        {practiceHighlights.length === 0 ? (
+          <p className="muted">Still waiting for repeat practice items. Keep finishing games.</p>
+        ) : (
+          <ul className="practice-ideas-list">
+            {practiceHighlights.map(([idea, count]) => (
+              <li key={idea}>
+                <strong>{idea}</strong>
+                <span>{count} {count === 1 ? "time" : "times"}</span>
               </li>
             ))}
           </ul>
@@ -102,6 +121,21 @@ function getPrincipleLeaders(history: CoachInsightEntry[]): Array<[CoachingPrinc
     .slice(0, 3);
 }
 
+function getPracticeIdeaLeaders(history: CoachInsightEntry[]): Array<[string, number]> {
+  const tally = new Map<string, number>();
+  history.forEach((entry) => {
+    (entry.practiceIdeas ?? []).forEach((idea) => {
+      const normalized = idea.trim();
+      if (!normalized) return;
+      tally.set(normalized, (tally.get(normalized) ?? 0) + 1);
+    });
+  });
+
+  return Array.from(tally.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+}
+
 function getGradeAverages(history: CoachInsightEntry[]) {
   const recent = history.slice(-RECENT_WINDOW);
   const totals: Record<string, number> = {};
@@ -132,4 +166,33 @@ function formatDelta(value: number) {
 
 function formatAverage(value: number) {
   return value.toFixed(1);
+}
+
+function getEloSeries(history: CoachInsightEntry[]) {
+  return history
+    .map((entry) => entry.estimatedElo)
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+}
+
+function Sparkline({ values }: { values: number[] }) {
+  if (values.length < 2) {
+    return null;
+  }
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(1, max - min);
+  const points = values
+    .map((value, index) => {
+      const x = (index / (values.length - 1 || 1)) * 100;
+      const y = 100 - ((value - min) / range) * 100;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <svg className="elo-sparkline" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <polyline points={points} />
+    </svg>
+  );
 }
