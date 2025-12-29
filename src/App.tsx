@@ -10,9 +10,11 @@ import { GameSummaryCard } from "./components/GameSummary";
 import { StockfishService } from "./engine/stockfishService";
 import type { EngineEvaluation, NormalizedEvaluation } from "./types/engine";
 import type {
+  CoachInsightEntry,
   CoachingHistoryEntry,
   CoachingPanelState,
   CoachingResponse,
+  GameSummaryResponse,
   GameSummaryState,
 } from "./types/coaching";
 import { getGameSummary, getMoveCoaching } from "./lib/openaiClient";
@@ -24,10 +26,17 @@ import {
   scoreToCentipawns,
   uciToMoveDescriptor,
 } from "./lib/chessHelpers";
-import { buildRecentFeedbackMemory, summarizeCoachingHistory } from "./lib/coachingHistory";
+import {
+  buildRecentFeedbackMemory,
+  summarizeCoachingHistory,
+  tallyGradeOccurrences,
+  tallyPrincipleOccurrences,
+} from "./lib/coachingHistory";
 import { clearApiKey, loadApiKey, saveApiKey } from "./lib/apiKeyStorage";
 import { clearGameState, loadGameState, saveGameState } from "./lib/gameStorage";
 import { DEFAULT_DIFFICULTY_ID, ENGINE_DIFFICULTIES, findDifficultyById, findLegacyDepthDifficulty, type ImperfectionProfile } from "./lib/engineDifficulty";
+import { loadCoachInsights, saveCoachInsights } from "./lib/coachInsightsStorage";
+import { LongTermInsights } from "./components/LongTermInsights";
 import "./App.css";
 
 const DEPTH_STORAGE_KEY = "chesscoach_engine_depth";
@@ -129,6 +138,7 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [statusText, setStatusText] = useState("Waiting for Stockfish...");
+  const [coachInsights, setCoachInsights] = useState<CoachInsightEntry[]>([]);
 
   useEffect(() => {
     const service = new StockfishService();
@@ -238,6 +248,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    setCoachInsights(loadCoachInsights());
+  }, []);
+
+  useEffect(() => {
     try {
       localStorage.setItem(DEPTH_STORAGE_KEY, selectedDifficulty.id);
     } catch (error) {
@@ -249,6 +263,42 @@ export default function App() {
   }, [selectedDifficulty, engineStatus]);
 
   const lastSummaryRef = useRef<string | null>(null);
+  const lastInsightSummaryRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!gameResult) {
+      lastInsightSummaryRef.current = null;
+    }
+  }, [gameResult]);
+
+  const recordCoachInsight = useCallback(
+    (summary: GameSummaryResponse, summaryKey: string | null) => {
+      if (!gameResult || !summaryKey) return;
+      if (lastInsightSummaryRef.current === summaryKey) return;
+
+      const principleTally = tallyPrincipleOccurrences(coachingHistory);
+      const gradeTally = tallyGradeOccurrences(coachingHistory);
+
+      const entry: CoachInsightEntry = {
+        id: `${Date.now()}`,
+        completedAt: new Date().toISOString(),
+        result: gameResult,
+        estimatedElo: Number.isFinite(summary.estimatedElo) ? summary.estimatedElo : null,
+        practiceIdeas: summary.practiceIdeas ?? [],
+        principleTally,
+        gradeTally,
+      };
+
+      setCoachInsights((prev) => {
+        const next = [...prev, entry].slice(-30);
+        saveCoachInsights(next);
+        return next;
+      });
+
+      lastInsightSummaryRef.current = summaryKey;
+    },
+    [coachingHistory, gameResult],
+  );
 
   useEffect(() => {
     if (!gameResult) {
@@ -276,12 +326,13 @@ export default function App() {
     )
       .then((summary) => {
         setSummaryState({ status: "ready", payload: summary });
+        recordCoachInsight(summary, pgn);
       })
       .catch((error) => {
         console.error(error);
         setSummaryState({ status: "error", message: "Summary unavailable (API error)." });
       });
-  }, [apiKey, coachingHistory, gameResult]);
+  }, [apiKey, coachingHistory, gameResult, recordCoachInsight]);
 
   const canPlayerMove = engineStatus === "ready" && !isProcessing && !gameResult;
   const canUndo = moves.length > 0 && !isProcessing;
@@ -300,6 +351,8 @@ export default function App() {
     setGameResult(null);
     setStatusText(engineStatus === "ready" ? "Game reset. Your move as White." : "Waiting for Stockfish...");
     clearGameState();
+    lastSummaryRef.current = null;
+    lastInsightSummaryRef.current = null;
   }, [engineStatus]);
 
   const handleSaveApiKey = useCallback(async (value: string) => {
@@ -541,6 +594,7 @@ export default function App() {
           />
           <MoveList moves={moves} />
           <GameSummaryCard state={summaryState} gameResult={gameResult} />
+          <LongTermInsights history={coachInsights} />
         </div>
 
         <EvaluationPanel

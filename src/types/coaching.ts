@@ -72,3 +72,13 @@ export type GameSummaryState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "ready"; payload: GameSummaryResponse };
+
+export type CoachInsightEntry = {
+  id: string;
+  completedAt: string;
+  result: string;
+  estimatedElo: number | null;
+  practiceIdeas: string[];
+  principleTally: Partial<Record<CoachingPrincipleId, number>>;
+  gradeTally: Partial<Record<CoachingGrade, number>>;
+};

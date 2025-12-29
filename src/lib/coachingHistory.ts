@@ -1,4 +1,9 @@
-import type { CoachingHistoryEntry, CoachingMemoryItem } from "../types/coaching";
+import type {
+  CoachingGrade,
+  CoachingHistoryEntry,
+  CoachingMemoryItem,
+  CoachingPrincipleId,
+} from "../types/coaching";
 
 const GRADE_ORDER = ["great", "good", "inaccurate", "mistake", "blunder"] as const;
 
@@ -48,4 +53,27 @@ export function buildRecentFeedbackMemory(
     shortLabel: entry.response.shortLabel,
     principles: entry.response.principles,
   }));
+}
+
+export function tallyPrincipleOccurrences(
+  history: CoachingHistoryEntry[],
+): Partial<Record<CoachingPrincipleId, number>> {
+  const tally: Partial<Record<CoachingPrincipleId, number>> = {};
+  history.forEach((entry) => {
+    entry.response.principles.forEach((principle) => {
+      tally[principle] = (tally[principle] ?? 0) + 1;
+    });
+  });
+  return tally;
+}
+
+export function tallyGradeOccurrences(
+  history: CoachingHistoryEntry[],
+): Partial<Record<CoachingGrade, number>> {
+  const tally: Partial<Record<CoachingGrade, number>> = {};
+  history.forEach((entry) => {
+    const grade = entry.response.grade;
+    tally[grade] = (tally[grade] ?? 0) + 1;
+  });
+  return tally;
 }
