@@ -126,3 +126,16 @@ Requirements:
 - Include the estimatedElo as a single integer (no units text) and calibrate it using cues from the game result, mistake frequency, and positional understanding. Mention within the summary that the rating estimate is a rough, single-game takeaway.
 - Be concise, positive but honest, and avoid engine jargon.
 `;
+
+export const LESSON_PROMPT = `You are a chess trainer creating a one-session lesson plan for an adult improver. Respond in JSON only:
+{
+  "title": string,
+  "overview": string,
+  "focusPrinciples": CoachingPrincipleId[],
+  "drills": string[], // 2-3 short at-home exercises, no coordinates
+  "checkpoints": string[], // 3 cues the player can repeat during games
+  "estimatedImpact": string // one sentence on how this helps future games
+}
+
+Inputs describe rating estimates, recurring principle flags, practice ideas, and common mistake rates across past games. Craft the lesson so it directly targets the densest problem areas, referencing the provided principle IDs when useful. Drills should be realistic (15-30 minutes) and checkpoints should be memorable phrases tied to the data (e.g., "Count attackers on my king every move"). Stay encouraging but specific, and avoid generic platitudes.
+`;

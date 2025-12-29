@@ -1,5 +1,11 @@
-import { COACHING_SYSTEM_PROMPT, GAME_SUMMARY_PROMPT } from "./coachingPrompt";
-import type { CoachingRequest, CoachingResponse, GameSummaryResponse } from "../types/coaching";
+import { COACHING_SYSTEM_PROMPT, GAME_SUMMARY_PROMPT, LESSON_PROMPT } from "./coachingPrompt";
+import type {
+  CoachLessonRequest,
+  CoachLessonResponse,
+  CoachingRequest,
+  CoachingResponse,
+  GameSummaryResponse,
+} from "../types/coaching";
 
 const API_URL = import.meta.env.VITE_OPENAI_API_BASE?.trim() || "https://api.openai.com/v1/chat/completions";
 const MODEL = import.meta.env.VITE_OPENAI_MODEL?.trim() || "gpt-4.1-mini";
@@ -90,5 +96,46 @@ export async function getGameSummary(
     return JSON.parse(content) as GameSummaryResponse;
   } catch (error) {
     throw new Error(`Unable to parse summary response: ${String(error)}`);
+  }
+}
+
+export async function getCoachLesson(input: CoachLessonRequest, apiKey: string): Promise<CoachLessonResponse> {
+  const payload = {
+    model: MODEL,
+    temperature: 0.4,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: LESSON_PROMPT },
+      {
+        role: "user",
+        content: `Player history summary as JSON: ${JSON.stringify(input)}`,
+      },
+    ],
+  };
+
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`OpenAI API error: ${response.status} ${errorBody}`);
+  }
+
+  const data = await response.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content) {
+    throw new Error("OpenAI API returned no content");
+  }
+
+  try {
+    return JSON.parse(content) as CoachLessonResponse;
+  } catch (error) {
+    throw new Error(`Unable to parse lesson response: ${String(error)}`);
   }
 }

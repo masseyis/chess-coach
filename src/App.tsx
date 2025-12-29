@@ -11,13 +11,15 @@ import { StockfishService } from "./engine/stockfishService";
 import type { EngineEvaluation, NormalizedEvaluation } from "./types/engine";
 import type {
   CoachInsightEntry,
+  CoachLessonRequest,
+  CoachLessonState,
   CoachingHistoryEntry,
   CoachingPanelState,
   CoachingResponse,
   GameSummaryResponse,
   GameSummaryState,
 } from "./types/coaching";
-import { getGameSummary, getMoveCoaching } from "./lib/openaiClient";
+import { getCoachLesson, getGameSummary, getMoveCoaching } from "./lib/openaiClient";
 import {
   describeGameOutcome,
   formatEvalLabel,
@@ -36,7 +38,16 @@ import { clearApiKey, loadApiKey, saveApiKey } from "./lib/apiKeyStorage";
 import { clearGameState, loadGameState, saveGameState } from "./lib/gameStorage";
 import { DEFAULT_DIFFICULTY_ID, ENGINE_DIFFICULTIES, findDifficultyById, findLegacyDepthDifficulty, type ImperfectionProfile } from "./lib/engineDifficulty";
 import { loadCoachInsights, saveCoachInsights } from "./lib/coachInsightsStorage";
+import { loadCoachLesson, saveCoachLesson } from "./lib/lessonStorage";
 import { LongTermInsights } from "./components/LongTermInsights";
+import { LessonPanel } from "./components/LessonPanel";
+import {
+  getGradeAverages,
+  getLatestEstimatedElo,
+  getPracticeIdeaLeaders,
+  getPreviousEstimatedElo,
+  getPrincipleLeaders,
+} from "./lib/coachInsightsSummary";
 import "./App.css";
 
 const DEPTH_STORAGE_KEY = "chesscoach_engine_depth";
@@ -139,6 +150,41 @@ export default function App() {
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [statusText, setStatusText] = useState("Waiting for Stockfish...");
   const [coachInsights, setCoachInsights] = useState<CoachInsightEntry[]>([]);
+  const [lessonState, setLessonState] = useState<CoachLessonState>({ status: "idle" });
+  const lessonContext = useMemo<CoachLessonRequest | null>(() => {
+    if (coachInsights.length === 0) return null;
+    const ratingEstimate = getLatestEstimatedElo(coachInsights);
+    const previous = getPreviousEstimatedElo(coachInsights);
+    const ratingTrend = ratingEstimate !== null && previous !== null ? ratingEstimate - previous : null;
+    const principleHotspots = getPrincipleLeaders(coachInsights).map(([id, count]) => ({ id, count }));
+    const recurringPracticeIdeas = getPracticeIdeaLeaders(coachInsights).map(([idea, count]) => ({ idea, count }));
+    const { sampleSize, averages } = getGradeAverages(coachInsights);
+    const mistakeRates = {
+      sampleSize,
+      mistakesPerGame: averages.mistake,
+      blundersPerGame: averages.blunder,
+    };
+    const recentResults = coachInsights
+      .slice(-5)
+      .map((entry) => entry.result)
+      .filter((result): result is string => typeof result === "string" && result.length > 0);
+    const recentMoveHighlights = coachingHistory.slice(-5).map((entry) => ({
+      move: entry.moveSan,
+      grade: entry.response.grade,
+      note: entry.response.shortLabel,
+    }));
+
+    return {
+      ratingEstimate,
+      ratingTrend,
+      totalGamesTracked: coachInsights.length,
+      principleHotspots,
+      recurringPracticeIdeas,
+      mistakeRates,
+      recentResults,
+      recentMoveHighlights,
+    };
+  }, [coachInsights, coachingHistory]);
 
   useEffect(() => {
     const service = new StockfishService();
@@ -252,6 +298,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const savedLesson = loadCoachLesson();
+    if (savedLesson) {
+      setLessonState({ status: "ready", payload: savedLesson });
+    }
+  }, []);
+
+  useEffect(() => {
     try {
       localStorage.setItem(DEPTH_STORAGE_KEY, selectedDifficulty.id);
     } catch (error) {
@@ -300,6 +353,27 @@ export default function App() {
     [coachingHistory, gameResult],
   );
 
+  const handleGenerateLesson = useCallback(async () => {
+    if (!lessonContext) {
+      setLessonState({ status: "error", message: "Finish at least one summarized game to unlock lessons." });
+      return;
+    }
+    if (!apiKey) {
+      setLessonState({ status: "error", message: "Add your OpenAI API key to request a lesson." });
+      return;
+    }
+
+    setLessonState({ status: "loading" });
+    try {
+      const lesson = await getCoachLesson(lessonContext, apiKey);
+      setLessonState({ status: "ready", payload: lesson });
+      saveCoachLesson(lesson);
+    } catch (error) {
+      console.error(error);
+      setLessonState({ status: "error", message: "Lesson unavailable (API error)." });
+    }
+  }, [apiKey, lessonContext]);
+
   useEffect(() => {
     if (!gameResult) {
       setSummaryState({ status: "idle" });
@@ -325,7 +399,7 @@ export default function App() {
       apiKey,
     )
       .then((summary) => {
-        setSummaryState({ status: "ready", payload: summary });
+    setSummaryState({ status: "ready", payload: summary });
         recordCoachInsight(summary, pgn);
       })
       .catch((error) => {
@@ -595,6 +669,12 @@ export default function App() {
           <MoveList moves={moves} />
           <GameSummaryCard state={summaryState} gameResult={gameResult} />
           <LongTermInsights history={coachInsights} />
+          <LessonPanel
+            state={lessonState}
+            onGenerate={handleGenerateLesson}
+            insightsAvailable={Boolean(lessonContext)}
+            disabled={isProcessing}
+          />
         </div>
 
         <EvaluationPanel

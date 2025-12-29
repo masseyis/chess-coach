@@ -82,3 +82,29 @@ export type CoachInsightEntry = {
   principleTally: Partial<Record<CoachingPrincipleId, number>>;
   gradeTally: Partial<Record<CoachingGrade, number>>;
 };
+
+export type CoachLessonRequest = {
+  ratingEstimate: number | null;
+  ratingTrend: number | null;
+  totalGamesTracked: number;
+  principleHotspots: Array<{ id: CoachingPrincipleId; count: number }>;
+  recurringPracticeIdeas: Array<{ idea: string; count: number }>;
+  mistakeRates: { sampleSize: number; mistakesPerGame: number; blundersPerGame: number };
+  recentResults: string[];
+  recentMoveHighlights: Array<{ move: string; grade: CoachingGrade; note: string }>;
+};
+
+export type CoachLessonResponse = {
+  title: string;
+  overview: string;
+  focusPrinciples: CoachingPrincipleId[];
+  drills: string[];
+  checkpoints: string[];
+  estimatedImpact: string;
+};
+
+export type CoachLessonState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; payload: CoachLessonResponse };
