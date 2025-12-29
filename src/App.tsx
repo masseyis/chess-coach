@@ -18,6 +18,7 @@ import type {
   CoachingResponse,
   GameSummaryResponse,
   GameSummaryState,
+  LessonScenario,
 } from "./types/coaching";
 import { getCoachLesson, getGameSummary, getMoveCoaching } from "./lib/openaiClient";
 import {
@@ -151,6 +152,14 @@ export default function App() {
   const [statusText, setStatusText] = useState("Waiting for Stockfish...");
   const [coachInsights, setCoachInsights] = useState<CoachInsightEntry[]>([]);
   const [lessonState, setLessonState] = useState<CoachLessonState>({ status: "idle" });
+  const [trainingSession, setTrainingSession] = useState<{
+    scenario: LessonScenario;
+    chess: Chess;
+    fen: string;
+    stepIndex: number;
+    feedback: string | null;
+    status: "active" | "complete";
+  } | null>(null);
   const lessonContext = useMemo<CoachLessonRequest | null>(() => {
     if (coachInsights.length === 0) return null;
     const ratingEstimate = getLatestEstimatedElo(coachInsights);
@@ -374,6 +383,41 @@ export default function App() {
     }
   }, [apiKey, lessonContext]);
 
+  const handleTrainingDrop = useCallback(
+    (source: Square, target: Square) => {
+      let moveAccepted = false;
+      setTrainingSession((prev) => {
+        if (!prev || prev.status === "complete") return prev;
+        const move = prev.chess.move({ from: source, to: target, promotion: "q" });
+        if (!move) {
+          return prev;
+        }
+        const expected = prev.scenario.solution[prev.stepIndex];
+        if (expected && move.san === expected.move) {
+          const nextIndex = prev.stepIndex + 1;
+          const finished = nextIndex >= prev.scenario.solution.length;
+          moveAccepted = true;
+          return {
+            ...prev,
+            stepIndex: nextIndex,
+            feedback: expected.explanation,
+            status: finished ? "complete" : "active",
+            fen: prev.chess.fen(),
+          };
+        }
+
+        prev.chess.undo();
+        moveAccepted = false;
+        return {
+          ...prev,
+          feedback: prev.scenario.fallbackHint || "Not quite — revisit the key idea.",
+        };
+      });
+      return moveAccepted;
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!gameResult) {
       setSummaryState({ status: "idle" });
@@ -428,6 +472,31 @@ export default function App() {
     lastSummaryRef.current = null;
     lastInsightSummaryRef.current = null;
   }, [engineStatus]);
+
+  const handleStartScenario = useCallback((scenario: LessonScenario) => {
+    try {
+      const trainingChess = new Chess();
+      trainingChess.load(scenario.fen);
+      if (trainingChess.turn() !== (scenario.sideToMove ?? "white").charAt(0)) {
+        // Ensure side to move matches FEN; no-op if mismatch.
+      }
+      setTrainingSession({
+        scenario,
+        chess: trainingChess,
+        fen: trainingChess.fen(),
+        stepIndex: 0,
+        feedback: null,
+        status: "active",
+      });
+    } catch (error) {
+      console.warn("Unable to start scenario", error);
+      setLessonState({ status: "error", message: "Scenario FEN invalid." });
+    }
+  }, []);
+
+  const exitTrainingScenario = useCallback(() => {
+    setTrainingSession(null);
+  }, []);
 
   const handleSaveApiKey = useCallback(async (value: string) => {
     await saveApiKey(value);
@@ -674,7 +743,35 @@ export default function App() {
             onGenerate={handleGenerateLesson}
             insightsAvailable={Boolean(lessonContext)}
             disabled={isProcessing}
+            onStartScenario={handleStartScenario}
           />
+          {trainingSession && (
+            <div className="training-panel">
+              <div className="panel-header">
+                <div>
+                  <div className="panel-label">Drill: {trainingSession.scenario.title}</div>
+                  <p className="muted small">{trainingSession.scenario.objective}</p>
+                </div>
+                <div className="training-actions">
+                  <button className="secondary-btn" onClick={() => handleStartScenario(trainingSession.scenario)}>
+                    Restart
+                  </button>
+                  <button className="danger-btn" onClick={exitTrainingScenario}>
+                    Exit
+                  </button>
+                </div>
+              </div>
+              <ChessBoardPanel
+                fen={trainingSession.fen}
+                allowMoves={trainingSession.status !== "complete"}
+                onPieceDrop={handleTrainingDrop}
+                statusText={trainingSession.status === "complete" ? "Drill complete!" : "Play the idea."}
+                gameResult={trainingSession.status === "complete" ? "Success" : null}
+              />
+              {trainingSession.feedback && <p className="muted">Feedback: {trainingSession.feedback}</p>}
+              {trainingSession.status === "complete" && <p className="muted">Great job! Try the next scenario or restart to reinforce.</p>}
+            </div>
+          )}
         </div>
 
         <EvaluationPanel

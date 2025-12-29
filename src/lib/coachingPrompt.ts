@@ -134,8 +134,22 @@ export const LESSON_PROMPT = `You are a chess trainer creating a one-session les
   "focusPrinciples": CoachingPrincipleId[],
   "drills": string[], // 2-3 short at-home exercises, no coordinates
   "checkpoints": string[], // 3 cues the player can repeat during games
-  "estimatedImpact": string // one sentence on how this helps future games
+  "estimatedImpact": string, // one sentence on how this helps future games
+  "scenarios": Array<{
+    "id": string,
+    "title": string,
+    "fen": string,
+    "sideToMove": "white" | "black",
+    "objective": string,
+    "fallbackHint": string,
+    "solution": Array<{"move": string, "explanation": string}>
+  }>
 }
 
-Inputs describe rating estimates, recurring principle flags, practice ideas, and common mistake rates across past games. Craft the lesson so it directly targets the densest problem areas, referencing the provided principle IDs when useful. Drills should be realistic (15-30 minutes) and checkpoints should be memorable phrases tied to the data (e.g., "Count attackers on my king every move"). Stay encouraging but specific, and avoid generic platitudes.
+Scenario guidelines:
+- Provide 1-2 positions (FEN) that embody the player's most common mistakes. Make sure each SAN move in solution is legal from the given FEN when played sequentially.
+- Solutions should be short (2-4 ply) and highlight the remedy idea called out by the lesson.
+- fallbackHint should remind the student of the underlying principle without giving the exact move.
+
+Inputs describe rating estimates, recurring principle flags, practice ideas, and mistake rates across past games. Craft the plan so it directly targets the densest problem areas, referencing the provided principle IDs when useful. Drills should be realistic (15-30 minutes) and checkpoints should be memorable phrases tied to the data (e.g., "Count attackers on my king every move"). Stay encouraging but specific, and avoid generic platitudes.
 `;

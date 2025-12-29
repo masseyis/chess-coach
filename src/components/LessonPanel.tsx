@@ -1,13 +1,14 @@
-import type { CoachLessonState } from "../types/coaching";
+import type { CoachLessonState, LessonScenario } from "../types/coaching";
 
 type Props = {
   state: CoachLessonState;
   onGenerate: () => void;
   insightsAvailable: boolean;
   disabled?: boolean;
+  onStartScenario?: (scenario: LessonScenario) => void;
 };
 
-export function LessonPanel({ state, onGenerate, insightsAvailable, disabled }: Props) {
+export function LessonPanel({ state, onGenerate, insightsAvailable, disabled, onStartScenario }: Props) {
   const isLoading = state.status === "loading";
   const handleClick = () => {
     if (disabled || isLoading) return;
@@ -64,6 +65,28 @@ export function LessonPanel({ state, onGenerate, insightsAvailable, disabled }: 
             </div>
           )}
           <p className="muted">Why this matters: {state.payload.estimatedImpact}</p>
+          {state.payload.scenarios.length > 0 && (
+            <div className="lesson-scenarios">
+              <h4>Interactive drills</h4>
+              <ul>
+                {state.payload.scenarios.map((scenario) => (
+                  <li key={scenario.id}>
+                    <div>
+                      <strong>{scenario.title}</strong>
+                      <p className="muted small">{scenario.objective}</p>
+                    </div>
+                    <button
+                      className="secondary-btn"
+                      onClick={() => onStartScenario?.(scenario)}
+                      disabled={!onStartScenario}
+                    >
+                      Start drill
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
       {state.status === "idle" && insightsAvailable && <p className="muted">Tap "Generate lesson" to get a 15-minute study plan.</p>}

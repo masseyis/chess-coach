@@ -94,6 +94,21 @@ export type CoachLessonRequest = {
   recentMoveHighlights: Array<{ move: string; grade: CoachingGrade; note: string }>;
 };
 
+export type LessonScenarioStep = {
+  move: string;
+  explanation: string;
+};
+
+export type LessonScenario = {
+  id: string;
+  title: string;
+  fen: string;
+  sideToMove: "white" | "black";
+  objective: string;
+  fallbackHint: string;
+  solution: LessonScenarioStep[];
+};
+
 export type CoachLessonResponse = {
   title: string;
   overview: string;
@@ -101,6 +116,7 @@ export type CoachLessonResponse = {
   drills: string[];
   checkpoints: string[];
   estimatedImpact: string;
+  scenarios: LessonScenario[];
 };
 
 export type CoachLessonState =
