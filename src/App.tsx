@@ -727,7 +727,7 @@ export default function App() {
       />
 
       <div className="board-layout">
-        <div>
+        <div className="play-column">
           <ChessBoardPanel
             fen={fen}
             allowMoves={canPlayerMove}
@@ -774,14 +774,16 @@ export default function App() {
           )}
         </div>
 
-        <EvaluationPanel
-          engineStatus={engineStatus}
-          engineMessage={engineMessage}
-          evaluationLabel={currentEvalLabel}
-          coachingState={coachingState}
-          previousFeedback={lastFeedback}
-          lastMoveSan={lastHumanMove?.san ?? null}
-        />
+        <div className="analytics-column">
+          <EvaluationPanel
+            engineStatus={engineStatus}
+            engineMessage={engineMessage}
+            evaluationLabel={currentEvalLabel}
+            coachingState={coachingState}
+            previousFeedback={lastFeedback}
+            lastMoveSan={lastHumanMove?.san ?? null}
+          />
+        </div>
       </div>
     </div>
   );
