@@ -1,5 +1,11 @@
 import type { CoachingPrincipleId } from "../types/coaching";
 
+const BASE_PATH = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+const resourceUrl = (path: string) => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${BASE_PATH}${normalizedPath}` || normalizedPath;
+};
+
 type PrincipleMeta = {
   label: string;
   description: string;
@@ -15,7 +21,7 @@ export const COACHING_PRINCIPLES: Record<CoachingPrincipleId, PrincipleMeta> = {
     description: "Occupy or influence the central squares (d4, d5, e4, e5) with pawns and pieces.",
     resource: {
       title: "Why the center matters",
-      url: "/resources/center-control.html",
+      url: resourceUrl("/resources/center-control.html"),
     },
   },
   piece_activity: {
@@ -23,7 +29,7 @@ export const COACHING_PRINCIPLES: Record<CoachingPrincipleId, PrincipleMeta> = {
     description: "Coordinate pieces so they have targets, open lines, and no pieces are sleeping on the back rank.",
     resource: {
       title: "Activate your pieces",
-      url: "/resources/piece-activity.html",
+      url: resourceUrl("/resources/piece-activity.html"),
     },
   },
   king_safety: {
@@ -31,7 +37,7 @@ export const COACHING_PRINCIPLES: Record<CoachingPrincipleId, PrincipleMeta> = {
     description: "Castle in time, keep a pawn shield, and do not loosen squares near your king.",
     resource: {
       title: "Keep your king safe",
-      url: "/resources/king-safety.html",
+      url: resourceUrl("/resources/king-safety.html"),
     },
   },
   tactics: {
@@ -39,7 +45,7 @@ export const COACHING_PRINCIPLES: Record<CoachingPrincipleId, PrincipleMeta> = {
     description: "Avoid hanging pieces and watch for forks, pins, skewers, and basic winning tactics.",
     resource: {
       title: "Spot basic tactics",
-      url: "/resources/tactics-basics.html",
+      url: resourceUrl("/resources/tactics-basics.html"),
     },
   },
   trading_when_ahead: {
@@ -47,7 +53,7 @@ export const COACHING_PRINCIPLES: Record<CoachingPrincipleId, PrincipleMeta> = {
     description: "Exchange pieces (not pawns) when you are up material to simplify into a winning endgame.",
     resource: {
       title: "When to trade pieces",
-      url: "/resources/trading-when-ahead.html",
+      url: resourceUrl("/resources/trading-when-ahead.html"),
     },
   },
   rook_activity: {
@@ -55,7 +61,7 @@ export const COACHING_PRINCIPLES: Record<CoachingPrincipleId, PrincipleMeta> = {
     description: "Place rooks on open/semi-open files or the 7th rank where they can infiltrate.",
     resource: {
       title: "Energize your rooks",
-      url: "/resources/rook-activity.html",
+      url: resourceUrl("/resources/rook-activity.html"),
     },
   },
   king_attack: {
@@ -63,7 +69,7 @@ export const COACHING_PRINCIPLES: Record<CoachingPrincipleId, PrincipleMeta> = {
     description: "Bring at least three pieces to attack the king when it is exposed.",
     resource: {
       title: "Coordinate a king attack",
-      url: "/resources/king-attack.html",
+      url: resourceUrl("/resources/king-attack.html"),
     },
   },
 };
