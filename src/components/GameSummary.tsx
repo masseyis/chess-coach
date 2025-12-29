@@ -17,6 +17,9 @@ export function GameSummaryCard({ state, gameResult }: Props) {
       {state.status === "ready" && (
         <div>
           <h3>{state.payload.headline}</h3>
+          {typeof state.payload.estimatedElo === "number" && Number.isFinite(state.payload.estimatedElo) && (
+            <p className="muted">Estimated rating from this game: ~{Math.round(state.payload.estimatedElo)} Elo</p>
+          )}
           <p>{state.payload.summary}</p>
           <h4>Practice next</h4>
           <ul>

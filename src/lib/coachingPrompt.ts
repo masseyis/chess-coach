@@ -110,11 +110,13 @@ export const GAME_SUMMARY_PROMPT = `You are a chess coach summarizing an amateur
 {
   "headline": string,
   "summary": string,
-  "practiceIdeas": string[] // 2-3 actionable habits without move notation
+  "practiceIdeas": string[], // 2-3 actionable habits without move notation
+  "estimatedElo": number // integer estimate (400-2000) for the player's current strength based on this single game
 }
 
 Requirements:
 - Reference the provided PGN and bullet feedback themes.
 - Mention what went well, what broke down, and 2-3 concrete practice ideas (no coordinates; e.g., "Review king safety principles" not "Play g4").
+- Include the estimatedElo as a single integer (no units text) and calibrate it using cues from the game result, mistake frequency, and positional understanding. Mention within the summary that the rating estimate is a rough, single-game takeaway.
 - Be concise, positive but honest, and avoid engine jargon.
 `;

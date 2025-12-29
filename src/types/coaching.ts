@@ -64,6 +64,7 @@ export type GameSummaryResponse = {
   headline: string;
   summary: string;
   practiceIdeas: string[];
+  estimatedElo: number;
 };
 
 export type GameSummaryState =
