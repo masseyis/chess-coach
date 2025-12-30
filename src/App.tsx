@@ -735,6 +735,14 @@ export default function App() {
             statusText={statusText}
             gameResult={gameResult}
           />
+          <EvaluationPanel
+            engineStatus={engineStatus}
+            engineMessage={engineMessage}
+            evaluationLabel={currentEvalLabel}
+            coachingState={coachingState}
+            previousFeedback={lastFeedback}
+            lastMoveSan={lastHumanMove?.san ?? null}
+          />
           <MoveList moves={moves} />
           <GameSummaryCard state={summaryState} gameResult={gameResult} />
           <LongTermInsights history={coachInsights} />
@@ -772,17 +780,6 @@ export default function App() {
               {trainingSession.status === "complete" && <p className="muted">Great job! Try the next scenario or restart to reinforce.</p>}
             </div>
           )}
-        </div>
-
-        <div className="analytics-column">
-          <EvaluationPanel
-            engineStatus={engineStatus}
-            engineMessage={engineMessage}
-            evaluationLabel={currentEvalLabel}
-            coachingState={coachingState}
-            previousFeedback={lastFeedback}
-            lastMoveSan={lastHumanMove?.san ?? null}
-          />
         </div>
       </div>
     </div>

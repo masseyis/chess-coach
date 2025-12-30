@@ -116,13 +116,12 @@
 }
 
 .board-layout {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
 }
 
-.play-column,
-.analytics-column {
+.play-column {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -562,18 +561,5 @@
 @media (max-width: 768px) {
   .app-shell {
     padding: 1.5rem 1rem;
-  }
-
-  .board-layout {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .analytics-column {
-    order: 2;
-  }
-
-  .play-column {
-    order: 1;
   }
 }
