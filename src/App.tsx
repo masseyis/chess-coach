@@ -727,7 +727,7 @@ export default function App() {
       />
 
       <div className="board-layout">
-        <div className="play-column">
+        <div className="board-section">
           <ChessBoardPanel
             fen={fen}
             allowMoves={canPlayerMove}
@@ -735,6 +735,9 @@ export default function App() {
             statusText={statusText}
             gameResult={gameResult}
           />
+        </div>
+
+        <div className="evaluation-section">
           <EvaluationPanel
             engineStatus={engineStatus}
             engineMessage={engineMessage}
@@ -743,9 +746,21 @@ export default function App() {
             previousFeedback={lastFeedback}
             lastMoveSan={lastHumanMove?.san ?? null}
           />
+        </div>
+
+        <div className="move-section">
           <MoveList moves={moves} />
+        </div>
+
+        <div className="summary-section">
           <GameSummaryCard state={summaryState} gameResult={gameResult} />
+        </div>
+
+        <div className="insights-section">
           <LongTermInsights history={coachInsights} />
+        </div>
+
+        <div className="lesson-section">
           <LessonPanel
             state={lessonState}
             onGenerate={handleGenerateLesson}
@@ -753,7 +768,10 @@ export default function App() {
             disabled={isProcessing}
             onStartScenario={handleStartScenario}
           />
-          {trainingSession && (
+        </div>
+
+        {trainingSession && (
+          <div className="training-section">
             <div className="training-panel">
               <div className="panel-header">
                 <div>
@@ -779,8 +797,8 @@ export default function App() {
               {trainingSession.feedback && <p className="muted">Feedback: {trainingSession.feedback}</p>}
               {trainingSession.status === "complete" && <p className="muted">Great job! Try the next scenario or restart to reinforce.</p>}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

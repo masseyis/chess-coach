@@ -118,13 +118,27 @@
 .board-layout {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
-.play-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.board-section,
+.evaluation-section,
+.move-section,
+.summary-section,
+.insights-section,
+.lesson-section,
+.training-section {
+  display: contents;
+}
+
+.board-section > *,
+.evaluation-section > *,
+.move-section > *,
+.summary-section > *,
+.insights-section > *,
+.lesson-section > *,
+.training-section > * {
+  width: 100%;
 }
 
 .move-list {
@@ -561,5 +575,49 @@
 @media (max-width: 768px) {
   .app-shell {
     padding: 1.5rem 1rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .board-layout {
+    display: grid;
+    grid-template-columns: minmax(320px, 640px) minmax(260px, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .board-section {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .evaluation-section {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+  }
+
+  .move-section {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .summary-section {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .insights-section {
+    grid-column: 1;
+    grid-row: 4;
+  }
+
+  .lesson-section {
+    grid-column: 1;
+    grid-row: 5;
+  }
+
+  .training-section {
+    grid-column: 1 / span 2;
+    grid-row: 6;
   }
 }
