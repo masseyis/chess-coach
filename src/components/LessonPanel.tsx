@@ -28,48 +28,54 @@ export function LessonPanel({ state, onGenerate, insightsAvailable, disabled, on
       </div>
       {!insightsAvailable && <p className="muted">Finish a summarized game first so the coach knows your patterns.</p>}
       {state.status === "error" && <p className="error-text">{state.message}</p>}
-      {state.status === "ready" && (
-        <div className="lesson-body">
-          <h3>{state.payload.title}</h3>
-          <p>{state.payload.overview}</p>
-          {state.payload.focusPrinciples.length > 0 && (
+      {state.status === "ready" && state.payload && (() => {
+        const { title, overview, estimatedImpact } = state.payload;
+        const focusPrinciples = state.payload.focusPrinciples ?? [];
+        const drills = state.payload.drills ?? [];
+        const checkpoints = state.payload.checkpoints ?? [];
+        const scenarios = state.payload.scenarios ?? [];
+        return (
+          <div className="lesson-body">
+            <h3>{title}</h3>
+            <p>{overview}</p>
+            {focusPrinciples.length > 0 && (
             <div>
               <h4>Focus principles</h4>
               <div className="principle-tags">
-                {state.payload.focusPrinciples.map((id) => (
+                {focusPrinciples.map((id) => (
                   <span key={id} className="principle-tag">
                     {id}
                   </span>
                 ))}
               </div>
             </div>
-          )}
-          {state.payload.drills.length > 0 && (
+            )}
+            {drills.length > 0 && (
             <div>
               <h4>Drills</h4>
               <ul>
-                {state.payload.drills.map((drill) => (
+                {drills.map((drill) => (
                   <li key={drill}>{drill}</li>
                 ))}
               </ul>
             </div>
-          )}
-          {state.payload.checkpoints.length > 0 && (
+            )}
+            {checkpoints.length > 0 && (
             <div>
               <h4>Game checkpoints</h4>
               <ul>
-                {state.payload.checkpoints.map((tip) => (
+                {checkpoints.map((tip) => (
                   <li key={tip}>{tip}</li>
                 ))}
               </ul>
             </div>
-          )}
-          <p className="muted">Why this matters: {state.payload.estimatedImpact}</p>
-          {state.payload.scenarios.length > 0 && (
+            )}
+            <p className="muted">Why this matters: {estimatedImpact}</p>
+            {scenarios.length > 0 && (
             <div className="lesson-scenarios">
               <h4>Interactive drills</h4>
               <ul>
-                {state.payload.scenarios.map((scenario) => (
+                {scenarios.map((scenario) => (
                   <li key={scenario.id}>
                     <div>
                       <strong>{scenario.title}</strong>
@@ -86,9 +92,10 @@ export function LessonPanel({ state, onGenerate, insightsAvailable, disabled, on
                 ))}
               </ul>
             </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        );
+      })()}
       {state.status === "idle" && insightsAvailable && <p className="muted">Tap "Generate lesson" to get a 15-minute study plan.</p>}
     </div>
   );

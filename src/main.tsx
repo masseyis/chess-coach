@@ -5,8 +5,11 @@ import App from './App.tsx'
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
+    const swPath = `${import.meta.env.BASE_URL ?? '/'}sw.js`
+      .replace(/\/+/g, '/')
+      .replace(':/', '://');
     navigator.serviceWorker
-      .register('/sw.js')
+      .register(swPath)
       .catch((error) => console.warn('Service worker registration failed', error))
   })
 }
