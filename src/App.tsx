@@ -160,6 +160,13 @@ export default function App() {
     feedback: string | null;
     status: "active" | "complete";
   } | null>(null);
+  const aggregateElo = useMemo(() => {
+    const entries = coachInsights.filter((entry) => typeof entry.estimatedElo === "number");
+    if (entries.length === 0) return null;
+    const total = entries.reduce((sum, entry) => sum + (entry.estimatedElo ?? 0), 0);
+    return { average: total / entries.length, count: entries.length };
+  }, [coachInsights]);
+
   const lessonContext = useMemo<CoachLessonRequest | null>(() => {
     if (coachInsights.length === 0) return null;
     const ratingEstimate = getLatestEstimatedElo(coachInsights);
@@ -753,7 +760,7 @@ export default function App() {
         </div>
 
         <div className="summary-section">
-          <GameSummaryCard state={summaryState} gameResult={gameResult} />
+          <GameSummaryCard state={summaryState} gameResult={gameResult} aggregateEstimate={aggregateElo} />
         </div>
 
         <div className="insights-section">

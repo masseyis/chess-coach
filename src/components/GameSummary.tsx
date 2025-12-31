@@ -3,9 +3,10 @@ import type { GameSummaryState } from "../types/coaching";
 type Props = {
   state: GameSummaryState;
   gameResult: string | null;
+  aggregateEstimate?: { average: number; count: number } | null;
 };
 
-export function GameSummaryCard({ state, gameResult }: Props) {
+export function GameSummaryCard({ state, gameResult, aggregateEstimate }: Props) {
   if (!gameResult) return null;
 
   return (
@@ -17,9 +18,7 @@ export function GameSummaryCard({ state, gameResult }: Props) {
       {state.status === "ready" && (
         <div>
           <h3>{state.payload.headline}</h3>
-          {typeof state.payload.estimatedElo === "number" && Number.isFinite(state.payload.estimatedElo) && (
-            <p className="muted">Estimated rating from this game: ~{Math.round(state.payload.estimatedElo)} Elo</p>
-          )}
+          {renderEstimate(state.payload.estimatedElo, aggregateEstimate)}
           <p>{state.payload.summary}</p>
           <h4>Practice next</h4>
           <ul>
@@ -31,4 +30,21 @@ export function GameSummaryCard({ state, gameResult }: Props) {
       )}
     </div>
   );
+}
+
+function renderEstimate(latest: number | undefined, aggregate?: { average: number; count: number } | null) {
+  if (aggregate && Number.isFinite(aggregate.average)) {
+    return (
+      <p className="muted">
+        Estimated rating (avg of {aggregate.count} games): ~{Math.round(aggregate.average)} Elo
+        {typeof latest === "number" && Number.isFinite(latest) ? ` (last game ~${Math.round(latest)})` : ""}
+      </p>
+    );
+  }
+
+  if (typeof latest === "number" && Number.isFinite(latest)) {
+    return <p className="muted">Estimated rating from this game: ~{Math.round(latest)} Elo</p>;
+  }
+
+  return null;
 }
