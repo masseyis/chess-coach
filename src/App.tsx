@@ -659,6 +659,11 @@ export default function App() {
     async ({ move, fenBefore, fenAfter }: { move: Move; fenBefore: string; fenAfter: string }) => {
       if (!engineRef.current) return;
 
+      if (chessRef.current.isGameOver()) {
+        setCoachingState({ status: "idle" });
+        return;
+      }
+
       setIsProcessing(true);
       setCoachingState({ status: "loading" });
       setLastHumanMove(move);
@@ -693,6 +698,13 @@ export default function App() {
 
       const fenAfter = game.fen();
       syncGameState();
+
+      if (game.isGameOver()) {
+        setLastHumanMove(move);
+        setCoachingState({ status: "idle" });
+        return true;
+      }
+
       evaluateAndCoach({ move, fenBefore, fenAfter });
 
       return true;
